@@ -2,6 +2,10 @@
 const express = require('express');
 // Connecting the mysql2 database 
 const mysql = require('mysql2');
+const { devNull } = require('os');
+// This function is requiring the use of the module
+// in the utils folder that was provided 
+const inputCheck = require('./utils/inputCheck');
 // Setting up the PORT and calling the express package 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -33,11 +37,46 @@ const db = mysql.createConnection(
 
 // This query method runs SQL query and executes a callback 
 // w/ resulting rows that match the query 
+// this query retrieves all candidates 
+app.get('/api/candidates', (req, res) => {
+    const sql = `SELECT * FROM candidates`;
+
+    db.query(sql, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+// The code below was to test if it ran in the terminal 
+
 // db.query(`Select * FROM candidates`, (err, rows) => {
 //     console.log(rows);
 // });
 
 // GET a single candidate
+app.get('/api/candidate/:id', (req, res) => {
+    const sql = `SELECT * FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+
+    db.query(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
+
+
 // db.query(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
 //     if(err) {
 //         console.log(err)
@@ -46,6 +85,27 @@ const db = mysql.createConnection(
 // });
 
 // Delete a candidate
+app.delete('/api/candidate/:id', (req, res) => {
+    const sql = `DELETE FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.statusMessage(400).json({ error: err.message });
+        } else if (!result.affectedRows) {
+            res.json({
+                message: 'Candidate not found'
+            });
+        } else {
+            res.json({
+                message: 'deleted',
+                changes: result.affectedRows,
+                id: req.params.id
+            });
+        }
+    });
+});
+
 // db.query(`DELETE FROM candidates WHERE id = ?`, 1, (err, result) => {
 //     if (err) {
 //         console.log(err)
@@ -53,17 +113,42 @@ const db = mysql.createConnection(
 //     console.log(result);
 // });
 
-// Create a candidate
-const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected)
-             VALUES(?,?,?,?)`
-const params = [1, 'Ronald', 'Firbank', 1];
 
-db.query(sql, params, (err, results) => {
-    if (err) {
-        console.log(err)
+// Create a candidate
+app.post('/api/candidate/', ({ body }, res) => {
+    // NOTE: in this function, since it's not a template literal 
+    // it each seperate part is notated as seen blow in the errors function
+    const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
     }
-    console.log(results);
+    const sql = `INSERT INTO candidates (first_name, last_name, industry_connected)
+                 VALUES (?,?,?)`
+    const params = [body.first_name, body.last_name, body.industry_connected];
+
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: body
+        });
+    });
 });
+
+// const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected)
+//              VALUES(?,?,?,?)`
+// const params = [1, 'Ronald', 'Firbank', 1];
+
+// db.query(sql, params, (err, results) => {
+//     if (err) {
+//         console.log(err)
+//     }
+//     console.log(results);
+// });
 
 // Default response for any other request (Not Found)
 // This is a catch-all route b/c the "*" is considerd a 'wild card'
