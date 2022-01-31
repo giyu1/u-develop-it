@@ -9,7 +9,7 @@ CREATE TABLE parties (
     description TEXT
 ); 
 
--- This is created to show the Tables schema -- s
+-- This is created to show the Tables schema -- 
 CREATE TABLE candidates (
     id INTEGER AUTO_INCREMENT PRIMARY KEY, 
     first_name VARCHAR(30) NOT NULL, 
