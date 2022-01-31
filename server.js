@@ -2,8 +2,6 @@
 const express = require('express');
 // Connecting the mysql2 database 
 const mysql = require('mysql2');
-const { devNull } = require('os');
-const { resourceLimits } = require('worker_threads');
 // This function is requiring the use of the module
 // in the utils folder that was provided 
 const inputCheck = require('./utils/inputCheck');
@@ -181,6 +179,7 @@ app.get ('/api/parties', (req, res) => {
 });
 
 //Creating a GET route for party id's
+// Gets a single party 
 app.get('/api/party/:id', (req, res) => {
     const sql = `SELECT * FROM parties WHERE id = ?`;
     const params = [req.params.id];
@@ -197,6 +196,7 @@ app.get('/api/party/:id', (req, res) => {
 });
 
 // Creating a DELETE route for parties to complete CRUD method
+// Deletes a party 
 app.delete('/api/party/:id', (req, res) => {
     const sql = 'DELETE FROM parties WHERE id = ?';
     const params = [req.params.id];
